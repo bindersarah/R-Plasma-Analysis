@@ -1,0 +1,73 @@
+# PLASMA DATA ----
+# Analyzing plasma_all
+# 6.26.23
+# Sarah Binder
+
+# Load packages
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(magrittr)
+
+# import plasma_all
+
+plasma_all <- read_excel("/Users/etta/Desktop/hland_data/plasma_all.xlsx")
+View(plasma_all)
+#. ----
+# 1. all assays (0/1)----
+# add column to note cases where all assays are NOT available for the selected draw
+# revisit ---- assays_all col not named right?
+plasma_all$assays_all <- ifelse(is.na(plasma_all[ ,7]) | is.na(plasma_all[ ,9])
+    | is.na(plasma_all[ ,11]) | is.na(plasma_all[ ,13]) | is.na(plasma_all[ ,15])
+    | is.na(plasma_all[ ,17])  == TRUE, 0, 1)       
+View(plasma_all)
+
+plasma_all %>% group_by(assays_all) %>% 
+  summarize(n())
+# 0 : 11
+# 1 : 88
+# 11 participants who do not have all assays available
+
+# 2. intervals----
+# calc interval btwn draw and each scan and add as new col
+plasma_all$interval_amy <- difftime(plasma_all$selected_draw, plasma_all$scan_date_amy, units = "days")
+plasma_all$interval_tau <- difftime(plasma_all$selected_draw, plasma_all$scan_date_tau, units = "days")
+
+# 3. closest interval ----
+# add column noting whether selected draw date is closest to amy or tau scan
+# if interval_amy absolute value < abs value interval_tau, then amyloid scan is closest to selected_draw
+# added option for "equal" to signify the draw date being equally close to amyloid & tau scans
+# only one indicident of "equal"
+
+plasma_all$closest_scan <- ifelse(abs(plasma_all$interval_amy) == abs(plasma_all$interval_tau), "equal",
+       (ifelse(abs(plasma_all$interval_amy) < abs(plasma_all$interval_tau),
+              "amyloid", "tau")))
+View(plasma_all)
+
+# 4. CV > 20% ----
+# examine CVs: any CV > 20 mark.. new column noting CV >20
+plasma_all$CV_exceeding <- ifelse((plasma_all[ , c(8, 10, 12, 14, 16, 18)] > 0.2), 1, 0)
+
+# # of cases per assay where CV > 20 % :
+plasma_all %>% group_by(CV_exceeding[,"ptau181_CV"]) %>% 
+  summarize(n())
+# 1 ptau181_CV > 20 %
+plasma_all %>% group_by(CV_exceeding[,"gfap_CV"]) %>% 
+  summarize(n())
+# 3 gfap CV > 20 %
+plasma_all %>% group_by(CV_exceeding[,"nfl_CV"]) %>% 
+  summarize(n())
+# 1 nfl  > 20 %
+plasma_all %>% group_by(CV_exceeding[,"tau_CV"]) %>% 
+  summarize(n())
+# 5 tau CV > 20 %
+plasma_all %>% group_by(CV_exceeding[,"ab40_CV"]) %>% 
+  summarize(n())
+# 1 ab40 CV > 20 %
+plasma_all %>% group_by(CV_exceeding[,"ab42_CV"]) %>% 
+  summarize(n())
+# 1 ab43 CV > 20 %
+
+
+
+
