@@ -1,4 +1,4 @@
-# R_hland_plasma
+# R Plasma Analysis
 
 ## Intro
 The code written here represents my analysis of a dataset containing information garnered from plasma assays.
